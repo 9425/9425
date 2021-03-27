@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <properties resource="db.properties"></properties>
+    <!--
+    设置与数据库交互的环境，例如可以在此处配置二级缓存，配置查询延迟加载策略等等。。。
+    配置的目的：
+             为了更加有效的查询表中的记录，在实际项目开发中，settings的设置基本没用，
+             因为settings对于查询的优化得到效果不明显，对于海量级别的数据，使用settings
+             配置优化，起不到任何的效果，对于数据量较少的项目，对于查询的效率要求比较低，也没有必要
+             使用settings设置
+    海量级别的数据，如何提高查询效率？
+             基础操作:对于常用的查询条件字段，设置索引
+             高级操作：使用nosql数据库，redis
+             专业操作：Elasticsearch与Solr
+             针对电商行业
+    -->
+
+    <!--
+    为mapper映射文件中的domain起别名
+    -->
+    <typeAliases>
+        <!--
+        方式一：
+              为指定的类分别起别名，别名的命名由我们自己来决定
+              type:要为那个domain起别名，填写包.类名称
+              alias:别名的名字
+        -->
+        <!--下面的一行代码即为对domain.Student起好了stu的别名-->
+        <!--<typeAlias type="domain.Student" alias="stu"></typeAlias>-->
+        <!--
+        方式二：
+              使用package标签批量起别名，别名是MyBatis默认为我们取好了的，命名不是由我们自己决定，
+              ,别名为类名（类名的字母不区分大小写，虽然字母不区分大小写，但是我们还是要按照约定俗成的规则填写，
+              类名，类名首字母可以小写）
+              name:指定一个包结构，表示在该包下，所有的domain自动起好别名
+        -->
+        <package name="domain"></package>
+        <!--
+        总结：
+            （1）未来实际项目开发中，如果公司需要使用起别名的机制，我们要使用批量起别名的方式
+            （2）在市场上也有很多企业摒弃使用MyBatis起别名的机制，公司会认为将domain写成全路径，
+            可以有效的提供代码可读性
+        -->
+    </typeAliases>
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${user}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!--将mapper.xml进行到环境配置文件中的几种方式-->
+
+    <!--mapper文件仅仅配置一次，然后可以不用在管mybatis-config文件-->
+    <mappers>
+        <!--
+        方式1：
+             使用resource属性，指定mapper映射文件
+        -->
+        <mapper resource="dao/StudentDao.xml"/>
+
+        <!--
+        方式2：
+             使用class属性，找到dao层接口的全路径
+        -->
+       <!-- <mapper class="dao.StudentDao"/>-->
+
+        <!--
+        方式3：
+             批量注册
+             name属性：指向dao层的包，表示在该dao包下，所有的mapper文件进行自动注册
+        -->
+        <!--<package name="dao"/>-->
+        <!--
+        总结：
+            未来实际项目开发中，我们一定是批量注册mapper映射文件的
+        -->
+    </mappers>
+</configuration>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.StudentDao">
+    <select id="getById" resultType="domain.Student">
+        select * from tbl_student2 where id = #{id}
+    </select>
+
+    <!--
+    下面getAll的方法中，resultType类型写为Student是因为存在数组里面的类型是
+    Student的，虽然最后得到的是List
+    -->
+    <select id="getAll" resultType="domain.Student">
+        select * from tbl_student2
+    </select>
+    <insert id="save">
+        insert into tbl_student2(id,name,age,address) values (#{id},#{name},#{age},#{address})
+    </insert>
+    <select id="select2" parameterType="int" resultType="domain.Student">
+        select * from tbl_student2 where age=#{age}
+    </select>
+    <!--
+    select3这种查询在mapper文件中的书写方式没有问题，但是在方法中书写不正确，
+    需要传入的是一个Student类，因此正确的写法为select4
+    -->
+    <select id="select3" resultType="domain.Student">
+        select * from tbl_student2 where name=#{name} and age=#{age}
+    </select>
+
+    <select id="select4" parameterType="domain.Student" resultType="domain.Student">
+        select * from tbl_student2 where name=#{name} and age=#{age}
+    </select>
+    <select id="select5" parameterType="map" resultType="domain.Student">
+        select * from tbl_student2 where name=#{name} and age=#{age}
+    </select>
+
+    <select id="select6" resultType="domain.Student">
+        select * from tbl_student2 where id='${value}'
+    </select>
+
+    <select id="select7" resultType="domain.Student">
+        select * from tbl_student2 where name like '%${value}%'
+    </select>
+
+    <select id="select8" resultType="domain.Student">
+        select * from tbl_student2 where name like #{name}
+    </select>
+
+    <select id="select9" resultType="domain.Student">
+        select * from tbl_student2 where name like '%' #{name} '%'
+    </select>
+    <!--
+    注意：
+        在select9中，模糊查询格式为'%'空格#{}空格'%'
+        以上空格不能省略，如果将空格省略不会报错，但是数据无法查询到
+    -->
+    <select id="select10" resultType="String">
+        select name from tbl_student2 where id=#{id}
+    </select>
+
+    <select id="select11" resultType="java.lang.String">
+        select name from tbl_student2;
+    </select>
+
+    <select id="select12" resultType="int">
+        select count(*) from tbl_student2
+    </select>
+
+    <select id="select14" resultType="map">
+        select * from tbl_student2;
+    </select>
+
+    <select id="select15" resultType="Student">
+        select id,fullname as name,age,address from tbl_student2
+        /*
+        上述代码是将数据库中的fullname通过起别名的方式修改为和domain中name,
+        使其和domain中的保持一致，如果不一致将会出错
+        */
+    </select>
+
+    <resultMap id="stuMap" type="Student">
+        <!--
+        id标签：用来配置主键对应关系的
+        result标签：用来配置普通字段对应关系的
+
+        对于tbl_student表，表结果是一个id,两个普通字段，所以我们需要一个id
+        标签，两个result标签
+
+        property属性：配置的是类中的属性名
+        column属性：配置的是表中的字段名
+        这样就能够建立起类属性和表字段一一对应的关系了
+        Studnet
+           id
+           name
+           age
+        tbl_student
+           tbl_id
+           tbl_name
+           tbl_age
+        -->
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+        <result property="age" column="age"></result>
+    </resultMap>
+    <select id="select16" resultMap="stuMap">
+        select id,name,age,address from tbl_student2
+    </select>
+
+    <!--where标签
+    当where标签在使用的时候，必须要搭配where标签对中的if标签来使用
+    通过if标签判断，如果有查询条件，则展现where关键字，如果没有查询条件，则
+    不展现where关键字
+    where标签会自动的屏蔽掉第一个连接符 and/or-->
+    <select id="select17" resultType="domain.Student">
+        select * from tbl_student2
+        <where>
+            <if test="name!=null and name!=''">
+                and name like '%' #{name} '%'
+            </if>
+            <if test="address!=null and address!=''">
+                and address like '%' #{address} '%'
+            </if>
+        </where>
+    </select>
+
+    <select id="select18" resultType="domain.Student">
+        select * from tbl_student2 where id in
+        <!--
+        foreach标签：用来遍历传递来的数组参数
+        collection:标识传递参数类型
+        array:数组
+        list:集合
+        item:每一次遍历出来的元素，在使用该元素的时候，需要套用在#{}中
+        open:拼接循环的开始符号
+        close:拼接循环的结束符号
+        separator:元素与元素之间的分隔符
+        -->
+        <foreach collection="array" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <!--
+    使用sql标签制作sql片段
+    sql片段的作用是用来代替sql语句中的代码
+    如果你的mapper映射文件中的sql语句某些代码出现了大量的重复，我们可以使用
+    sql片段来代替他们
+    id:sql片段的唯一标识，将来找到sql片段使用id来进行定位
+    将来实际项目开发中，使用sql片段用来代替重复率高，且复杂的子查询
+
+    select * from tbl_student2
+    where name=(
+          select xxxx
+          xxxxx
+          (
+              select....
+          )
+    )
+    注意：
+        对于sql片段
+        在同一个mapper下，大量的出现重复子查询的几率不高，所以一般情况下没有使用sql
+        片段的必要
+        在实际项目开发中，如果你大量的使用sql片段，会大大的降低sql语句的可读性
+        在很多企业中，干脆摒弃使用sql片段的机制
+    -->
+    <!--<sql id="sql1">
+        select * from tbl_student2
+    </sql>
+    <select id="select19" resultType="domain.Student">
+        <include refid="sql1"/> where id=#{id}
+    </select>-->
+    <sql id="sql1">
+        select * from tbl_student2
+    </sql>
+    <select id="select19" resultType="domain.Student">
+        <include refid="sql1">
+        </include>
+        where id=#{id}
+    </select>
+
+    <select id="select20" resultType="map">
+        select * from tbl_student2 s join tbl_classroom c on c.classroomId=s.id
+    </select>
+    <select id="select21" resultType="vo.StudentAndClassroomVo">
+        select s.id sid,s.name sname,s.age sage,s.address saddress,c.classroomId cid,c.name cname from tbl_student2 s join tbl_classroom c on c.classroomId=s.id
+    </select>
+    <select id="select22" resultType="vo.StudentAndClassroomVo">
+        select s.id sid,
+               s.name sname,
+               s.age  sage,
+               s.address saddress,
+               c.classroomId cid,
+               c.name cname from
+               tbl_student2 s join
+               tbl_classroom c
+               on c.classroomId=s.id
+               where s.name like '%' #{name} '%'
+    </select>
+</mapper>
